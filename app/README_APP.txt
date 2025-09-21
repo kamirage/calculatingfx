@@ -1,0 +1,1 @@
+This folder contains the HTML UI. Edit 'stop_loss_calculator_with_max_loss.html' if needed.

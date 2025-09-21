@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Stop Loss Calculator — Simplified</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#071022;color:#e6eef8;padding:18px}
+  .card{background:#071829;padding:16px;border-radius:10px;max-width:900px;margin:0 auto}
+  label{display:block;font-size:13px;color:#bcd7ff;margin-top:8px}
+  input,select,button{padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;width:100%}
+  .row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .small{font-size:13px;color:#9fb7d6;margin-top:8px}
+  .result{margin-top:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);color:#dff;}
+  button{cursor:pointer;background:#ff8a3d;border:none;font-weight:700}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Stop Loss Calculator — Автообъём</h2>
+  <div class="small">Введите только цену входа и стоп-лосса. Баланс и риск можно оставить по умолчанию.</div>
+
+  <label>Инструмент</label>
+  <select id="instrument" onchange="onInstrumentChange()">
+    <option value="BTCUSDT">BTC/USDT</option>
+    <option value="ETHUSDT">ETH/USDT</option>
+    <option value="XAUUSD">XAU/USD</option>
+    <option value="EURUSD">EUR/USD</option>
+    <option value="GER40">GER40 (DAX)</option>
+  </select>
+
+  <label>Entry (цена входа)</label><input id="entry" placeholder="например 43000 или 1.2345"/>
+
+  <label>Stop (цена стоп-лосса)</label><input id="stop" placeholder="например 42500"/>
+
+  <label>Balance (баланс)</label><input id="balance" value="1000"/>
+
+  <label>Risk %</label><input id="risk" value="1"/>
+
+  <label>Contract multiplier</label><input id="cm" value="1"/>
+
+  <label>Tick size</label><input id="tick"/>
+
+  <div class="row">
+    <button onclick="onCalcClick()">Вычислить</button>
+    <button onclick="onClearClick()" style="background:#ffffff1a">Очистить</button>
+  </div>
+
+  <div id="status" class="result" style="display:none"></div>
+  <div id="out" class="result" style="display:none"></div>
+</div>
+
+<script>
+function setText(id, text, visible){
+  var el=document.getElementById(id);
+  if(!el) return;
+  el.style.display=visible?'block':'none';
+  el.innerHTML=text;
+}
+function parseNum(v){
+  if(v===null||v===undefined) return null;
+  v=(''+v).trim().replace(',','.');
+  if(v==='') return null;
+  var n=parseFloat(v);
+  return isNaN(n)?null:n;
+}
+function onInstrumentChange(){
+  var inst=document.getElementById('instrument').value;
+  var cm=document.getElementById('cm');
+  var tick=document.getElementById('tick');
+  if(inst==="BTCUSDT"){ cm.value=1; tick.value=0.01; }
+  else if(inst==="ETHUSDT"){ cm.value=1; tick.value=0.01; }
+  else if(inst==="XAUUSD"){ cm.value=100; tick.value=0.1; }
+  else if(inst==="EURUSD"){ cm.value=100000; tick.value=0.0001; }
+  else if(inst==="GER40"){ cm.value=25; tick.value=1; }
+}
+function onCalcClick(){
+  try{
+    setText('status','',false); setText('out','',false);
+    var entry=parseNum(document.getElementById('entry').value);
+    var stop=parseNum(document.getElementById('stop').value);
+    var bal=parseNum(document.getElementById('balance').value);
+    var risk=parseNum(document.getElementById('risk').value);
+    var cm=parseNum(document.getElementById('cm').value)||1;
+    var tick=parseNum(document.getElementById('tick').value)||null;
+
+    if(entry===null||stop===null){ setText('status','Введите Entry и Stop.',true); return; }
+    if(!isFinite(bal)||bal<=0){ setText('status','Неверный баланс.',true); return; }
+    if(!isFinite(risk)||risk<=0){ setText('status','Неверный риск %.',true); return; }
+    var riskMoney=bal*(risk/100);
+
+    var priceMove=Math.abs(entry-stop);
+    if(priceMove===0){ setText('status','Entry и Stop совпадают.',true); return; }
+    var lossPerUnit=priceMove*cm;
+    var recommended=lossPerUnit>0?(riskMoney/lossPerUnit):null;
+    var ticks=tick?(priceMove/tick):null;
+    var html='<div><b>Баланс:</b> '+bal+'</div>';
+    html+='<div><b>Риск %:</b> '+risk+'%</div>';
+    html+='<div><b>Максимальный убыток:</b> '+riskMoney.toFixed(2)+' валюты</div>';
+    html+='<div><b>Расстояние:</b> '+priceMove.toFixed(8)+(ticks?(' (≈'+ticks.toFixed(2)+' ticks)'):'')+'</div>';
+    html+='<div><b>Потеря за 1 unit:</b> '+lossPerUnit.toFixed(8)+'</div>';
+    html+='<div style="margin-top:6px"><b>Автоматический объём (units):</b> '+(recommended?recommended.toFixed(8):'-')+'</div>';
+    setText('out',html,true);
+  }catch(err){
+    setText('status','Ошибка: '+err,true);
+  }
+}
+function onClearClick(){
+  ['entry','stop','balance','risk','cm','tick'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
+  setText('status','',false); setText('out','',false);
+}
+</script>
+</body>
+</html>
