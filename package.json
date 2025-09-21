@@ -1,0 +1,26 @@
+{
+  "name": "stop-loss-calculator-electron",
+  "version": "1.0.0",
+  "description": "Stop Loss Calculator — Electron wrapper for local HTML UI",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64 --publish never"
+  },
+  "build": {
+    "appId": "com.example.stoploss",
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "files": [
+      "app/**"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^25.0.0",
+    "electron-builder": "^24.6.0"
+  }
+}
